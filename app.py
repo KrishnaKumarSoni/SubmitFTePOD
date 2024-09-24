@@ -4,7 +4,7 @@ import openai
 from dotenv import load_dotenv
 import uuid
 import logging
-import google.generativeai as genai
+# import google.generativeai as genai
 import json
 import base64
 
@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
-genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+# genai.configure(api_key=os.environ['GEMINI_API_KEY'])
 
 # Hardcoded driver details for testing
 driver_data = {
@@ -63,21 +63,21 @@ def extract_receiver_details(image_url, image_path, model_choice):
         print(response)
         return response.choices[0].message.content
 
-    elif model_choice == "gemini":
-        # Upload the image using Gemini's API
-        uploaded_file = genai.upload_file(image_path)
+    # elif model_choice == "gemini":
+    #     # Upload the image using Gemini's API
+    #     uploaded_file = genai.upload_file(image_path)
         
-        # Choose the Gemini model (update if needed)
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+    #     # Choose the Gemini model (update if needed)
+    #     model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
-        result = model.generate_content([uploaded_file, prompt])
-        candidate = result.candidates[0]
+    #     result = model.generate_content([uploaded_file, prompt])
+    #     candidate = result.candidates[0]
 
-        if hasattr(candidate, 'output') and candidate.output:
-            return candidate.output
-        else:
-            logging.warning(f"No output generated. Finish reason: {candidate.finish_reason}")
-            return f"No output generated. Finish reason: {candidate.finish_reason}"
+    #     if hasattr(candidate, 'output') and candidate.output:
+    #         return candidate.output
+    #     else:
+    #         logging.warning(f"No output generated. Finish reason: {candidate.finish_reason}")
+    #         return f"No output generated. Finish reason: {candidate.finish_reason}"
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_image():
