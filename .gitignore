@@ -1,0 +1,6 @@
+# Ignore environment variables
+.env
+submitftepod-ce04d6b2947b.json
+__pycache__/
+temp_uploads/
+*.json  # Ensure your Google credentials aren't committed

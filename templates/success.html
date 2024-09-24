@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POD Submission Success</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .uploaded-image {
+            max-width: 90%;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+        .details-card {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f8f8f8;
+            width: 90%;
+            max-width: 400px;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .details-card h3 {
+            margin: 0 0 10px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        .details-card p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>Thank you! Your POD is successfully submitted.</h2>
+    <div class="details-card">
+        <h3>Receiver Details</h3>
+        <p>{{ receiver_details }}</p>
+    </div>
+    <img src="{{ image_url }}" alt="Uploaded POD" class="uploaded-image">
+</body>
+</html>
