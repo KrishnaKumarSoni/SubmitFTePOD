@@ -22,7 +22,7 @@ driver_data = {
     "8888888888": "Jane Smith"
 }
 
-def extract_receiver_details(image_url, image_path, model_choice):
+def extract_receiver_details(image_url):
     prompt = ("Please carefully analyze the attached image. Your objective is to find the Receiver / Consignee's name "
               "and their phone number. I will provide you an image of the invoice. Your task is to check whether in the first "
               "place it contains the name and the phone number of the consignor or not. Only write what is present and "
@@ -35,33 +35,26 @@ def extract_receiver_details(image_url, image_path, model_choice):
               "Name: "
               "Phone number: ")
 
-    logging.info(f"Sending image to {model_choice}")
+    image_data_url = image_url
 
-    if model_choice == "openai":
-        # Read the image and encode it in base64
-        with open(image_path, "rb") as image_file:
-            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
-
-        image_data_url = f"data:image/jpeg;base64,{base64_image}"
-
-        response = openai.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": image_data_url},
-                        },
-                    ],
-                }
-            ],
-            max_tokens=1000,
-        )
-        print(response)
-        return response.choices[0].message.content
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_data_url},
+                    },
+                ],
+            }
+        ],
+        max_tokens=1000,
+    )
+    print(response)
+    return response.choices[0].message.content
 
     # elif model_choice == "gemini":
     #     # Upload the image using Gemini's API
@@ -82,7 +75,6 @@ def extract_receiver_details(image_url, image_path, model_choice):
 @app.route("/upload", methods=["GET", "POST"])
 def upload_image():
     phone = request.args.get('phone')
-    model_choice = request.args.get('model')
     driver_name = driver_data.get(phone, "Driver")
 
     if request.method == "POST":
@@ -98,15 +90,12 @@ def upload_image():
             logging.info(f"Saved uploaded image to temporary path: {image_path}")
             
             # For OpenAI, generate image_url as base64 data URI
-            if model_choice == "openai":
-                with open(image_path, "rb") as image_file:
-                    base64_image = base64.b64encode(image_file.read()).decode('utf-8')
-                image_url = f"data:image/jpeg;base64,{base64_image}"
-            else:
-                image_url = None  # Not needed for Gemini
-
+            with open(image_path, "rb") as image_file:
+                base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            image_url = f"data:image/jpeg;base64,{base64_image}"
+            
             # Extract receiver details using the chosen AI model
-            receiver_details = extract_receiver_details(image_url, image_path, model_choice)
+            receiver_details = extract_receiver_details(image_url)
 
             # Parse receiver_details to extract Name and Phone number
             name = ''
