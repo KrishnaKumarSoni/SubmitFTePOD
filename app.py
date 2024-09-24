@@ -111,7 +111,7 @@ def upload_image():
                 os.remove(image_path)
                 logging.info(f"Deleted temporary file: {image_path}")
 
-            return render_template("success.html", name=name, phone_number=phone_number)
+            return render_template("success.html", name=name, phone_number=phone_number, ai_response=receiver_details)
     return render_template("upload.html", driver_name=driver_name)
 
 @app.route("/submit-details", methods=["POST"])
