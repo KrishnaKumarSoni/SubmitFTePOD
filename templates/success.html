@@ -71,7 +71,7 @@
     </style>
 </head>
 <body>
-    <h2>Thank you! Your POD is successfully submitted.</h2>
+    <h2>Thank you! Your POD is successfully submitted. You can edit details or choose to leave.</h2>
     <div class="details-card">
         <h3>Receiver Details</h3>
         <form action="/submit-details" method="post">
@@ -79,7 +79,7 @@
             <input type="text" id="name" name="name" value="{{ name }}">
             <label for="phone_number">Phone number:</label>
             <input type="text" id="phone_number" name="phone_number" value="{{ phone_number }}">
-            <input type="submit" value="Submit">
+            <input type="submit" value="Submit changes">
         </form>
         <div>
             <p>{{ ai_response }}</p>
