@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Details Submitted</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .details-card {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f8f8f8;
+            width: 90%;
+            max-width: 400px;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .details-card p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>Details Submitted Successfully!</h2>
+    <div class="details-card">
+        <p><strong>Name:</strong> {{ name }}</p>
+        <p><strong>Phone number:</strong> {{ phone_number }}</p>
+    </div>
+</body>
+</html>

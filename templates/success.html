@@ -37,10 +37,32 @@
             font-size: 1.1rem;
             text-align: center;
         }
-        .details-card p {
-            margin: 5px 0;
+        .details-card label {
+            display: block;
+            margin-bottom: 5px;
             font-size: 0.9rem;
             color: #333;
+        }
+        .details-card input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+        }
+        .details-card input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .details-card input[type="submit"]:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -48,8 +70,13 @@
     <h2>Thank you! Your POD is successfully submitted.</h2>
     <div class="details-card">
         <h3>Receiver Details</h3>
-        <p>{{ receiver_details }}</p>
+        <form action="/submit-details" method="post">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="{{ name }}">
+            <label for="phone_number">Phone number:</label>
+            <input type="text" id="phone_number" name="phone_number" value="{{ phone_number }}">
+            <input type="submit" value="Submit">
+        </form>
     </div>
-    <img src="{{ image_url }}" alt="Uploaded POD" class="uploaded-image">
 </body>
 </html>

@@ -1,5 +1,4 @@
 from flask import Flask, request, render_template, jsonify
-from google.cloud import storage
 import os
 import openai
 from dotenv import load_dotenv
@@ -7,23 +6,14 @@ import uuid
 import logging
 import google.generativeai as genai
 import json
+import base64
 
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Set Google Cloud credentials (ensure the JSON key is placed in your project directory)
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "submitftepod-ce04d6b2947b.json"
-credentials = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
-
-with open("service_account.json", "w") as file:
-    file.write(credentials)
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service_account.json"
-
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
 genai.configure(api_key=os.environ['GEMINI_API_KEY'])
 
 # Hardcoded driver details for testing
@@ -45,25 +35,31 @@ def extract_receiver_details(image_url, image_path, model_choice):
               "Name: "
               "Phone number: ")
 
-    logging.info(f"Sending image URL to {model_choice}: {image_url}")
+    logging.info(f"Sending image to {model_choice}")
 
     if model_choice == "openai":
+        # Read the image and encode it in base64
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+
+        image_data_url = f"data:image/jpeg;base64,{base64_image}"
+
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
                     "role": "user",
                     "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": image_url},
-                    },
-                ],
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": image_data_url},
+                        },
+                    ],
                 }
             ],
             max_tokens=1000,
-    )
+        )
         print(response)
         return response.choices[0].message.content
 
@@ -83,40 +79,6 @@ def extract_receiver_details(image_url, image_path, model_choice):
             logging.warning(f"No output generated. Finish reason: {candidate.finish_reason}")
             return f"No output generated. Finish reason: {candidate.finish_reason}"
 
-
-
-
-def generate_signed_url(phone, filename):
-    bucket_name = 'epod-uploads'
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(f"{phone}/{filename}")
-
-    # Generate a signed URL valid for 1 hour (3600 seconds)
-    signed_url = blob.generate_signed_url(version="v4", expiration=3600)
-    return signed_url
-
-def upload_image_to_gcp(image_path, phone):
-    bucket_name = 'epod-uploads'
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-
-    unique_filename = f"POD_{uuid.uuid4().hex}_{os.path.basename(image_path)}"
-    blob = bucket.blob(f"{phone}/{unique_filename}")
-    
-    logging.info(f"Uploading image to bucket: {bucket_name}, with filename: {unique_filename}")
-    
-    # Upload directly from the file system
-    blob.upload_from_filename(image_path, content_type="image/jpeg")  # Adjust content type as needed
-    
-    signed_url = generate_signed_url(phone, unique_filename)
-    logging.info(f"Generated signed URL: {signed_url}")
-
-    return signed_url
-
-
-
-
 @app.route("/upload", methods=["GET", "POST"])
 def upload_image():
     phone = request.args.get('phone')
@@ -127,7 +89,7 @@ def upload_image():
         image = request.files['image']
         if image:
             # Ensure temp_uploads directory exists
-            temp_dir = "temp_uploads"
+            temp_dir = "/tmp/temp_uploads"
             os.makedirs(temp_dir, exist_ok=True)
             # Save the uploaded image to a temporary file
             temp_filename = f"{uuid.uuid4().hex}_{image.filename}"
@@ -135,31 +97,40 @@ def upload_image():
             image.save(image_path)
             logging.info(f"Saved uploaded image to temporary path: {image_path}")
             
+            # For OpenAI, generate image_url as base64 data URI
+            if model_choice == "openai":
+                with open(image_path, "rb") as image_file:
+                    base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+                image_url = f"data:image/jpeg;base64,{base64_image}"
+            else:
+                image_url = None  # Not needed for Gemini
 
-            image_url = upload_image_to_gcp(image_path, phone)
-
-            # Extract receiver details using OpenAI's API
+            # Extract receiver details using the chosen AI model
             receiver_details = extract_receiver_details(image_url, image_path, model_choice)
+
+            # Parse receiver_details to extract Name and Phone number
+            name = ''
+            phone_number = ''
+            lines = receiver_details.split('\n')
+            for line in lines:
+                if line.lower().startswith('name:'):
+                    name = line[len('Name:'):].strip()
+                elif line.lower().startswith('phone number:'):
+                    phone_number = line[len('Phone number:'):].strip()
+
             if os.path.exists(image_path):
                 os.remove(image_path)
                 logging.info(f"Deleted temporary file: {image_path}")
-            return render_template("success.html", image_url=image_url, receiver_details=receiver_details)
 
+            return render_template("success.html", name=name, phone_number=phone_number)
     return render_template("upload.html", driver_name=driver_name)
 
+@app.route("/submit-details", methods=["POST"])
+def submit_details():
+    name = request.form.get('name')
+    phone_number = request.form.get('phone_number')
+    # For prototype, we don't need to process the data further.
+    return render_template("submission_success.html", name=name, phone_number=phone_number)
 
-# API endpoint to check image upload status
-@app.route("/check-upload", methods=["GET"])
-def check_upload():
-    phone = request.args.get('phone')
-    bucket_name = 'epod-uploads'
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blobs = list(bucket.list_blobs(prefix=f"{phone}/"))
-
-    if blobs:
-        signed_url = generate_signed_url(phone, blobs[0].name)
-        return jsonify({"status": "success", "message": "Image found", "image_url": signed_url})
-    else:
-        return jsonify({"status": "fail", "message": "No image found"})
-
+if __name__ == "__main__":
+    app.run(debug=True)
